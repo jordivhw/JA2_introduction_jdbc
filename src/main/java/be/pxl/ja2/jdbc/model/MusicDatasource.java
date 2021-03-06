@@ -268,7 +268,7 @@ public class MusicDatasource {
 	public void insertSong(String title, String artist, String album, int track) {
 
 		try {
-			conn.setAutoCommit(false);
+			conn.setAutoCommit(false); // transactie starten
 
 			int artistId = insertArtist(artist);
 			int albumId = insertAlbum(album, artistId);

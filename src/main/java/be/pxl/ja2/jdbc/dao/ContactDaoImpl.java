@@ -25,7 +25,8 @@ public class ContactDaoImpl implements ContactDao {
 	}
 
 	public Contact getContactByName(String name) {
-		try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(SELECT_BY_NAME)) {
+		try (Connection connection = getConnection();
+		     PreparedStatement stmt = connection.prepareStatement(SELECT_BY_NAME)) {
 			stmt.setString(1, name);
 			ResultSet rs = stmt.executeQuery();
 			if (rs.next()) {
@@ -61,7 +62,8 @@ public class ContactDaoImpl implements ContactDao {
 	}
 
 	public boolean updateContact(Contact contact) {
-		try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(UPDATE)) {
+		try (Connection connection = getConnection();
+		     PreparedStatement stmt = connection.prepareStatement(UPDATE)) {
 			stmt.setString(1, contact.getName());
 			stmt.setInt(2, contact.getPhone());
 			stmt.setString(3, contact.getEmail());
@@ -84,7 +86,8 @@ public class ContactDaoImpl implements ContactDao {
 	}
 
 	public Contact createContact(Contact contact) {
-		try (Connection connection = getConnection(); PreparedStatement stmt = connection.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS)) {
+		try (Connection connection = getConnection();
+		     PreparedStatement stmt = connection.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS)) {
 			stmt.setString(1, contact.getName());
 			stmt.setInt(2, contact.getPhone());
 			stmt.setString(3, contact.getEmail());

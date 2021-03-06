@@ -12,9 +12,7 @@ public class UsingContactDao {
 		System.out.println(contact);
 		Contact emma = contactDao.createContact(new Contact("Emma", 124353, "emma@gmail.com" ));
 		System.out.println(emma);
-		Contact john = contactDao.getContactByName("Joe");
-		System.out.println(john);
-
+		Contact joe = contactDao.getContactByName("Joe");
+		System.out.println(joe);
 	}
-
 }
