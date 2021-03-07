@@ -22,6 +22,7 @@ public class QueryForSongInfo {
 		// Go Your Own Way' or 1=1 or '
 
 		List<SongArtist> songArtists = datasource.querySongInfo(title);
+		//List<SongArtist> songArtists = datasource.querySongInfoWithPreparedStatment(title);
 		if (songArtists == null || songArtists.isEmpty()) {
 			System.out.println("Couldn't find the artist for the song");
 			return;
@@ -32,12 +33,6 @@ public class QueryForSongInfo {
 					" Album name = " + artist.getAlbumName() +
 					" Track = " + artist.getTrack());
 		}
-
-
-	/*	int count = datasource.getCount(Datasource.TABLE_SONGS);
-		System.out.println("Number of songs is: " + count); */
-
-
 
 		datasource.close();
 

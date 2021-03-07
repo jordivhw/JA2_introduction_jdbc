@@ -13,6 +13,7 @@ public class CountingRows {
 		System.out.println("albums = " + datasource.getCount(MusicDatasource.TABLE_ALBUMS));
 		System.out.println("songs = " + datasource.getCount(MusicDatasource.TABLE_SONGS));
 		System.out.println("artists = " + datasource.getCount(MusicDatasource.TABLE_ARTISTS));
+		System.out.println("contacts = " + datasource.getCount("contacts"));
 		datasource.close();
 	}
 }

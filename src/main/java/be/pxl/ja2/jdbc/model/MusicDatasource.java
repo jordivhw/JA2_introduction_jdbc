@@ -1,5 +1,8 @@
 package be.pxl.ja2.jdbc.model;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -10,13 +13,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @Copyright timbuchalka on 9/12/16
+ * Based on timbuchalka (9/12/16)
  */
 public class MusicDatasource {
 
+	private static final Logger LOGGER = LogManager.getLogger(MusicDatasource.class);
+
 	private static final String DB_NAME = "musicdb";
 
-	private static final String CONNECTION_STRING = "jdbc:mysql://localhost:3306/" + DB_NAME + "?useSSL=false";
+	private static final String CONNECTION_STRING = "jdbc:mysql://localhost:3306/" + DB_NAME;
 	private static final String USER_NAME = "user";
 	private static final String USER_PASSWORD = "password";
 
@@ -49,6 +54,11 @@ public class MusicDatasource {
 			"  INNER JOIN songs s ON al._id = s.album\n" +
 			"WHERE s.title = '";
 
+	public static final String QUERY_SONG_INFO_PREP_STATEMENT = "SELECT ar.name, al.name, s.track, s.title FROM albums al\n" +
+			"  INNER JOIN artists ar ON ar._id = al.artist\n" +
+			"  INNER JOIN songs s ON al._id = s.album\n" +
+			"WHERE s.title = ?";
+
 	public static final String INSERT_ARTIST = "INSERT INTO " + TABLE_ARTISTS +
 			'(' + COLUMN_ARTIST_NAME + ") VALUES(?)";
 	public static final String INSERT_ALBUMS = "INSERT INTO " + TABLE_ALBUMS +
@@ -65,7 +75,7 @@ public class MusicDatasource {
 			TABLE_ALBUMS + " WHERE " + COLUMN_ALBUM_NAME + " = ?";
 
 	private Connection conn;
-	//private PreparedStatement querySongInfo;
+	private PreparedStatement querySongInfo;
 	private PreparedStatement insertIntoArtists;
 	private PreparedStatement insertIntoAlbums;
 	private PreparedStatement insertIntoSongs;
@@ -76,24 +86,25 @@ public class MusicDatasource {
 	public boolean open() {
 		try {
 			conn = DriverManager.getConnection(CONNECTION_STRING, USER_NAME, USER_PASSWORD);
-			//querySongInfo = conn.prepareStatement(QUERY_SONG_INFO);
+			querySongInfo = conn.prepareStatement(QUERY_SONG_INFO_PREP_STATEMENT);
 			insertIntoArtists = conn.prepareStatement(INSERT_ARTIST, Statement.RETURN_GENERATED_KEYS);
 			insertIntoAlbums = conn.prepareStatement(INSERT_ALBUMS, Statement.RETURN_GENERATED_KEYS);
 			insertIntoSongs = conn.prepareStatement(INSERT_SONGS);
 			queryArtist = conn.prepareStatement(QUERY_ARTIST);
 			queryAlbum = conn.prepareStatement(QUERY_ALBUM);
+			LOGGER.info("MusicDatasource open...");
 			return true;
 		} catch (SQLException e) {
-			System.out.println("Couldn't connect to database: " + e.getMessage());
+			LOGGER.fatal("Couldn't connect to database.", e);
 			return false;
 		}
 	}
 
 	public void close() {
 		try {
-			//	if (querySongInfo != null) {
-			//		querySongInfo.close();
-			//	}
+			if (querySongInfo != null) {
+				querySongInfo.close();
+			}
 			if (insertIntoArtists != null) {
 				insertIntoArtists.close();
 			}
@@ -116,8 +127,9 @@ public class MusicDatasource {
 			if (conn != null) {
 				conn.close();
 			}
+			LOGGER.info("MusicDatasource closed.");
 		} catch (SQLException e) {
-			System.out.println("Couldn't close connection: " + e.getMessage());
+			LOGGER.fatal("Couldn't close connection.", e);
 		}
 	}
 
@@ -137,7 +149,7 @@ public class MusicDatasource {
 			return artists;
 
 		} catch (SQLException e) {
-			System.out.println("Query failed: " + e.getMessage());
+			LOGGER.fatal("Executing query failed. ", e);
 			return null;
 		}
 	}
@@ -147,13 +159,11 @@ public class MusicDatasource {
 		try (Statement statement = conn.createStatement();
 		     ResultSet results = statement.executeQuery(sql)) {
 			if (results.next()) {
-				int count = results.getInt("count");
-				return count;
+				return results.getInt("count");
 			}
 			return -1;
 		} catch (SQLException e) {
-			e.printStackTrace();
-			System.out.println("Query failed: " + e.getMessage());
+			LOGGER.fatal("Executing query failed. ", e);
 			return -1;
 		}
 	}
@@ -173,7 +183,7 @@ public class MusicDatasource {
 			}
 		}
 
-		System.out.println("SQL statement = " + sb.toString());
+		LOGGER.info("SQL statement = " + sb.toString());
 
 		try (Statement statement = conn.createStatement();
 		     ResultSet results = statement.executeQuery(sb.toString())) {
@@ -186,7 +196,7 @@ public class MusicDatasource {
 			return albums;
 
 		} catch (SQLException e) {
-			System.out.println("Query failed: " + e.getMessage());
+			LOGGER.fatal("Executing query failed. ", e);
 			return null;
 		}
 	}
@@ -196,6 +206,7 @@ public class MusicDatasource {
 		StringBuilder sb = new StringBuilder(QUERY_SONG_INFO);
 		sb.append(title);
 		sb.append("'");
+		LOGGER.info("Query: " + sb.toString());
 		try (Statement statement = conn.createStatement();
 		     ResultSet results = statement.executeQuery(sb.toString())) {
 
@@ -211,7 +222,29 @@ public class MusicDatasource {
 			return songArtists;
 
 		} catch (SQLException e) {
-			System.out.println("Query failed: " + e.getMessage());
+			LOGGER.fatal("Executing query failed. ", e);
+			return null;
+		}
+	}
+
+	public List<SongArtist> querySongInfoWithPreparedStatment(String title) {
+
+		try {
+			querySongInfo.setString(1, title);
+			LOGGER.info("Query: " + querySongInfo.toString());
+			ResultSet results = querySongInfo.executeQuery();
+			List<SongArtist> songArtists = new ArrayList<>();
+			while (results.next()) {
+				SongArtist songArtist = new SongArtist();
+				songArtist.setArtistName(results.getString(1));
+				songArtist.setAlbumName(results.getString(2));
+				songArtist.setTrack(results.getInt(3));
+				songArtists.add(songArtist);
+			}
+			return songArtists;
+
+		} catch (SQLException e) {
+			LOGGER.fatal("Executing query failed. ", e);
 			return null;
 		}
 	}
@@ -283,37 +316,20 @@ public class MusicDatasource {
 			}
 
 		} catch (Exception e) {
-			System.out.println("Insert song exception: " + e.getMessage());
+			LOGGER.fatal("Executing query failed. ", e);
 			try {
-				System.out.println("Performing rollback");
+				LOGGER.fatal("Performing rollback.");
 				conn.rollback();
 			} catch (SQLException e2) {
-				System.out.println("Oh boy! Things are really bad! " + e2.getMessage());
+				LOGGER.fatal("Oh boy! Things are really bad!", e2);
 			}
 		} finally {
 			try {
-				System.out.println("Resetting default commit behavior");
+				LOGGER.warn("Resetting default commit behavior.");
 				conn.setAutoCommit(true);
 			} catch (SQLException e) {
-				System.out.println("Couldn't reset auto-commit! " + e.getMessage());
+				LOGGER.error("Couldn't reset auto-commit!", e);
 			}
-
 		}
 	}
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
