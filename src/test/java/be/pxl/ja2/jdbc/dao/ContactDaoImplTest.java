@@ -19,10 +19,10 @@ public class ContactDaoImplTest {
 	private static final String USER = "sa";
 	private static final String PASSWORD = "";
 
-	private ContactDao contactDao = new ContactDaoImpl(URL, USER, PASSWORD);
-	private String NAME = "Alf";
-	private int PHONE = 666555;
-	private String EMAIL = "alf@pxl.be";
+	private final ContactDao contactDao = new ContactDaoImpl(URL, USER, PASSWORD);
+	private final String NAME = "Alf";
+	private final int PHONE = 666555;
+	private final String EMAIL = "alf@pxl.be";
 
 	@BeforeEach
 	public void init() throws SQLException {
