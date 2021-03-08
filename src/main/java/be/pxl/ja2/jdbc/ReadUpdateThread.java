@@ -28,8 +28,8 @@ public class ReadUpdateThread extends Thread {
 			connection.setAutoCommit(false);
 			Statement statement = connection.createStatement();
 			readPhoneNumber(statement);
-			Thread.sleep(5000);
 			updatePhoneNumber(statement);
+			Thread.sleep(5000);
 			if (commit) {
 				connection.commit();
 			} else {
@@ -67,7 +67,7 @@ public class ReadUpdateThread extends Thread {
 			Thread thread1 = new ReadUpdateThread(transactionLevel, "22222", false);
 			Thread thread2 = new ReadUpdateThread(transactionLevel, "44444", true);
 			thread1.start();
-			Thread.sleep(6000);
+			Thread.sleep(3000);
 			thread2.start();
 			thread1.join();
 			thread2.join();
